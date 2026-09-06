@@ -26,6 +26,7 @@ function App() {
   const [filterUpazila, setFilterUpazila] = useState('');
   const [filterMadrasaType, setFilterMadrasaType] = useState('');
   const [fetching, setFetching] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(10);
 
   const [selectedReport, setSelectedReport] = useState(null);
   const [showOathModal, setShowOathModal] = useState(false);
@@ -61,6 +62,10 @@ function App() {
   useEffect(() => {
     fetchReports();
   }, []);
+
+  useEffect(() => {
+  setVisibleCount(10);
+}, [filterDistrict, filterUpazila, filterMadrasaType]);
 
   useEffect(() => {
     if (selectedReport || showOathModal) {
@@ -216,6 +221,9 @@ function App() {
     return matchDistrict && matchUpazila && matchMadrasaType;
   });
 
+  const visibleReports = filteredReports.slice(0, visibleCount);
+const hasMore = visibleCount < filteredReports.length;
+
   return (
     <div className="app-shell">
       {toast && (
@@ -225,23 +233,24 @@ function App() {
         </div>
       )}
 
-      <header className="app-header">
-        <div className="brand-group">
-          <div className="logo-badge">
-  <img src={violenceLogo} alt="Logo" className="logo-img" />
-</div>
-          <div>
-            <h1 className="brand-title">বলাৎকার রিপোর্ট</h1>
-            <p className="brand-tagline brand-tagline--alert">বেনামী বলাৎকার রিপোর্টিং ও তথ্য সেবা</p>
-          </div>
-        </div>
-        <button
-          onClick={() => (window.location.href = "https://www.google.com")}
-          className="exit-btn"
-        >
-          <span>Quick Exit</span> ✖
-        </button>
-      </header>
+<button
+  onClick={() => (window.location.href = "https://www.google.com")}
+  className="exit-bar"
+>
+  <span>Quick Exit — এখনই নিরাপদে বেরিয়ে যান</span> ✖
+</button>
+
+<header className="app-header">
+  <div className="brand-group">
+    <div className="logo-badge">
+      <img src={violenceLogo} alt="Logo" className="logo-img" />
+    </div>
+    <div>
+      <h1 className="brand-title">বলাৎকার রিপোর্ট</h1>
+      <p className="brand-tagline brand-tagline--alert">বেনামী বলাৎকার রিপোর্টিং ও তথ্য সেবা</p>
+    </div>
+  </div>
+</header>
 
       <div className="tab-nav">
         <button
@@ -522,37 +531,48 @@ function App() {
           ) : filteredReports.length === 0 ? (
             <div className="state-box">কোনো রিপোর্ট পাওয়া যায়নি।</div>
           ) : (
-            <div className="cards-grid cards-grid--compact">
-              {filteredReports.map((report) => (
+            <>
+              <div className="cards-grid cards-grid--compact">
+                {visibleReports.map((report) => (
+                  <button
+                    key={report.id}
+                    className="data-card data-card--compact"
+                    onClick={() => setSelectedReport(report)}
+                  >
+                    <div className="compact-left">
+                      <div className="tag-group">
+                        <span className="tag tag--location">
+                          📍 {report.district}, {report.upazila}
+                        </span>
+                        <span className="tag tag--type">
+                          🕌 {report.madrasaType === 'হেফজখানা' ? 'হাফেজি' : (report.madrasaType || 'কওমি')}
+                        </span>
+                      </div>
+                      <div className="compact-name">
+                        অপরাধী: <span>{report.perpetrator}</span>
+                      </div>
+                    </div>
+                    <div className="compact-right">
+                      <span className="date-stamp">
+                        {report.createdAt?.toDate
+                          ? report.createdAt.toDate().toLocaleDateString('bn-BD')
+                          : 'সাম্প্রতিক'}
+                      </span>
+                      <span className="chevron">›</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {hasMore && (
                 <button
-                  key={report.id}
-                  className="data-card data-card--compact"
-                  onClick={() => setSelectedReport(report)}
+                  className="load-more-btn"
+                  onClick={() => setVisibleCount((prev) => prev + 10)}
                 >
-                  <div className="compact-left">
-                    <div className="tag-group">
-                      <span className="tag tag--location">
-                        📍 {report.district}, {report.upazila}
-                      </span>
-                      <span className="tag tag--type">
-                        🕌 {report.madrasaType === 'হেফজখানা' ? 'হাফেজি' : (report.madrasaType || 'কওমি')}
-                      </span>
-                    </div>
-                    <div className="compact-name">
-                      অপরাধী: <span>{report.perpetrator}</span>
-                    </div>
-                  </div>
-                  <div className="compact-right">
-                    <span className="date-stamp">
-                      {report.createdAt?.toDate
-                        ? report.createdAt.toDate().toLocaleDateString('bn-BD')
-                        : 'সাম্প্রতিক'}
-                    </span>
-                    <span className="chevron">›</span>
-                  </div>
+                  আরও দেখুন ⌄
                 </button>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       )}
